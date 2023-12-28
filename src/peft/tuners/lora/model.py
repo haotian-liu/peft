@@ -390,7 +390,7 @@ class LoraModel(BaseTuner):
                 continue
             if isinstance(target, LoraLayer):
                 if isinstance(target, nn.Embedding):
-                    new_module = torch.nn.Embedding(target.in_features, target.out_features)
+                    new_module = torch.nn.Embedding(target.in_features, target.out_features, device=target.weight.device)
                 elif isinstance(target, nn.Conv2d):
                     new_module = torch.nn.Conv2d(
                         target.in_channels,
@@ -399,6 +399,7 @@ class LoraModel(BaseTuner):
                         stride=target.stride,
                         padding=target.padding,
                         dilation=target.dilation,
+                        device=target.weight.device,
                     )
                 elif is_bnb_available() and isinstance(target, Linear8bitLt):
                     bias = target.base_layer.bias is not None
@@ -428,7 +429,7 @@ class LoraModel(BaseTuner):
                     if getattr(target, "is_target_conv_1d_layer", False):
                         new_module = Conv1D(target.out_features, target.in_features)
                     else:
-                        new_module = torch.nn.Linear(target.in_features, target.out_features, bias=bias)
+                        new_module = torch.nn.Linear(target.in_features, target.out_features, bias=bias, device=target.weight.device)
                 if merge:
                     target.merge(safe_merge=safe_merge)
                 self._replace_module(parent, target_name, new_module, target)
